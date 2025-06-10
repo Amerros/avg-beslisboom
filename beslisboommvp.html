@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVG-Inzageverzoeken Beslisboom - Faculteit Techniek HvA</title>
+    <style>
+        :root {
+            --hva-purple: #5c2d91;
+            --hva-purple-dark: #4a2578;
+            --hva-purple-light: #7a52cc;
+            --hva-blue: #0078d4;
+            --hva-blue-light: #e5f0ff;
+            --hva-green: #107c10;
+            --hva-orange: #ff8c00;
+            --hva-red: #d13438;
+            --hva-gray-light: #f3f2f1;
+            --hva-gray-medium: #edebe9;
+            --hva-gray-dark: #605e5c;
+            --hva-text: #323130;
+            --shadow-light: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-medium: 0 4px 8px rgba(0,0,0,0.1);
+            --border-radius: 6px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--hva-text);
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .beslisboom-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            min-height: 100vh;
+            box-shadow: var(--shadow-medium);
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--hva-purple) 0%, var(--hva-purple-light) 100%);
+            color: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .header h1 {
+            margin: 0 0 15px 0;
+            font-size: 28px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            margin: 0;
+            font-size: 16px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .progress-bar-container {
+            background-color: var(--hva-gray-light);
+            border-radius: 20px;
+            height: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--hva-blue) 0%, var(--hva-purple) 100%);
+            height: 100%;
+            border-radius: 20px;
+            transition: width 0.5s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .history-path {
+            background: linear-gradient(135deg, var(--hva-gray-light) 0%, #ffffff 100%);
+            border: 1px solid var(--hva-gray-medium);
+            border-radius: var(--border-radius);
+            padding: 15px 20px;
+            font-size: 13px;
+            color: var(--hva-gray-dark);
+            box-shadow: var(--shadow-light);
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .breadcrumb-item {
+            background: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            border: 1px solid var(--hva-gray-medium);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--hva-gray-dark);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .breadcrumb-item:hover {
+            background: var(--hva-blue-light);
+            border-color: var(--hva-blue);
+            color: var(--hva-blue);
+            transform: translateY(-1px);
+        }
+
+        .breadcrumb-item.current {
+            background: var(--hva-blue);
+            color: white;
+            border-color: var(--hva-blue);
+            font-weight: 600;
+        }
+
+        .breadcrumb-item.choice {
+            background: var(--hva-purple);
+            color: white;
+            border-color: var(--hva-purple);
+        }
+
+        .breadcrumb-arrow {
+            color: var(--hva-blue);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .sp-button {
+            background: linear-gradient(135deg, var(--hva-purple) 0%, var(--hva-purple-dark) 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+            transition: var(--transition);
+            box-shadow: var(--shadow-light);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sp-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .sp-button:hover::before {
+            left: 100%;
+        }
+
+        .sp-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(92, 45, 145, 0.3);
+        }
+
+        .sp-button.secondary {
+            background: linear-gradient(135deg, var(--hva-gray-light) 0%, var(--hva-gray-medium) 100%);
+            color: var(--hva-text);
+        }
+
+        .sp-button.secondary:hover {
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+
+        .sp-button.small {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+
+        .back-button {
+            background: linear-gradient(135deg, var(--hva-blue) 0%, #106ebe 100%);
+            color: white;
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition);
+            box-shadow: var(--shadow-light);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 120, 212, 0.3);
+            text-decoration: none;
+            color: white;
+        }
+
+        .decision-tree {
+            margin-top: 20px;
+        }
+
+        .decision-node {
+            background: white;
+            border: 1px solid var(--hva-gray-medium);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-medium);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .decision-node::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--hva-purple) 0%, var(--hva-blue) 100%);
+        }
+
+        .question {
+            font-size: 20px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: var(--hva-purple);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .question-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--hva-purple);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .description {
+            margin-bottom: 25px;
+            font-size: 15px;
+            color: var(--hva-gray-dark);
+            line-height: 1.6;
+        }
+
+        .action-box {
+            background: linear-gradient(135deg, var(--hva-blue-light) 0%, #f0f8ff 100%);
+            border-left: 4px solid var(--hva-blue);
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            padding: 20px;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .action-box.warning {
+            background: linear-gradient(135deg, #fff4e6 0%, #ffeaa7 100%);
+            border-left-color: var(--hva-orange);
+        }
+
+        .action-box.success {
+            background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+            border-left-color: var(--hva-green);
+        }
+
+        .action-box.error {
+            background: linear-gradient(135deg, #ffeaea 0%, #f8d7da 100%);
+            border-left-color: var(--hva-red);
+        }
+
+        .action-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--hva-blue);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+        }
+
+        .action-content {
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .action-content ul, .action-content ol {
+            margin: 12px 0;
+            padding-left: 20px;
+        }
+
+        .action-content li {
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .action-content li::marker {
+            color: var(--hva-blue);
+            font-weight: bold;
+        }
+
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .options.vertical {
+            flex-direction: column;
+        }
+
+        .options.vertical .sp-button {
+            width: 100%;
+            text-align: left;
+            justify-content: flex-start;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--hva-gray-medium);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow-light);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--hva-purple);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--hva-gray-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+            margin: 20px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--hva-blue);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -25px;
+            top: 20px;
+            width: 10px;
+            height: 10px;
+            background: var(--hva-blue);
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px var(--hva-blue);
+        }
+
+        .timeline-item.completed::before {
+            background: var(--hva-green);
+            box-shadow: 0 0 0 3px var(--hva-green);
+        }
+
+        .export-section {
+            background: var(--hva-gray-light);
+            border: 1px solid var(--hva-gray-medium);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .export-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--hva-purple);
+        }
+
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--hva-text);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+            box-shadow: var(--shadow-medium);
+        }
+
+        .system-card {
+            background: white;
+            border: 1px solid var(--hva-gray-medium);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow-light);
+            transition: var(--transition);
+        }
+
+        .system-card:hover {
+            border-color: var(--hva-blue);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .system-title {
+            font-weight: 600;
+            color: var(--hva-purple);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .system-description {
+            font-size: 14px;
+            color: var(--hva-gray-dark);
+            margin-bottom: 15px;
+        }
+
+        .completion-celebration {
+            text-align: center;
+            padding: 40px;
+            background: linear-gradient(135deg, var(--hva-green) 0%, #28a745 100%);
+            color: white;
+            border-radius: var(--border-radius);
+            margin: 20px 0;
+        }
+
+        .celebration-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        @media (max-width: 768px) {
+            .beslisboom-container {
+                padding: 15px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .history-path {
+                min-width: auto;
+            }
+            
+            .options {
+                flex-direction: column;
+            }
+            
+            .sp-button {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .question {
+                font-size: 18px;
+            }
+        }
+
+        @media print {
+            .controls, .action-buttons, .sp-button {
+                display: none !important;
+            }
+            
+            .decision-node {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="beslisboom-container">
+        <div class="header">
+            <h1>🏛️ AVG-Inzageverzoeken Beslisboom</h1>
+            <p>Faculteit Techniek | Hogeschool van Amsterdam</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="current-step">1</div>
+                <div class="stat-label">Huidige Stap</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="total-steps">12</div>
+                <div class="stat-label">Totaal Stappen</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="progress-percentage">8%</div>
+                <div class="stat-label">Voortgang</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="time-estimate">15 min</div>
+                <div class="stat-label">Geschatte Tijd</div>
+            </div>
+        </div>
+
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progress-bar" style="width: 8%"></div>
+        </div>
+
+        <div class="controls">
+            <div class="history-path">
+                <strong>📍 Voortgang:</strong>
+                <div class="breadcrumb" id="breadcrumb">
+                    <span class="breadcrumb-item current">Start</span>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <a href="#" id="back-button" class="back-button hidden" onclick="goBack()">
+                    ← Vorige stap
+                </a>
+                <button class="sp-button small" onclick="resetProcess()">🔄 Opnieuw beginnen</button>
+                <button class="sp-button small secondary" onclick="exportProgress()">💾 Voortgang opslaan</button>
+            </div>
+        </div>
+
+        <!-- Decision Tree Container -->
+        <div class="decision-tree">
+            
+            <!-- Start: Information about personal data -->
+            <div id="node-info-personal-data" class="decision-node">
+                <div class="question">
+                    <span class="question-icon">ℹ️</span>
+                    Wat zijn persoonsgegevens?
+                </div>
+                <div class="description">Voordat je aan de slag gaat met AVG-verzoeken, is het belangrijk om te weten wat persoonsgegevens zijn en hoe je deze herkent binnen de Faculteit Techniek.</div>
+                
+                <div class="action-box">
+                    <div class="action-title">📚 Persoonsgegevens definitie:</div>
+                    <div class="action-content">
+                        <p>Persoonsgegevens zijn <strong>alle gegevens</strong> die een natuurlijk persoon direct of indirect kunnen identificeren:</p>
+                        <ul>
+                            <li><strong>Direct identificerend:</strong> Naam, studentnummer, e-mailadres, pasfoto, personeelsnummer</li>
+                            <li><strong>Indirect identificerend:</strong> Combinatie van postcode + huisnummer, IP-adres, locatiegegevens</li>
+                            <li><strong>Bijzondere persoonsgegevens:</strong> Gezondheidsgegevens, geloofsovertuiging, seksuele voorkeur, biometrische gegevens</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="action-box warning">
+                    <div class="action-title">⚠️ Specifiek voor Faculteit Techniek:</div>
+                    <div class="action-content">
+                        <ul>
+                            <li>Studentgegevens (naam, studentnummer, contactgegevens)</li>
+                            <li>Studieresultaten en beoordelingen</li>
+                            <li>Aanwezigheidsregistratie en deelname</li>
+                            <li>Correspondentie met studenten</li>
+                            <li>Stagegegevens en -beoordelingen</li>
+                            <li>Feedback op opdrachten en projecten</li>
+                            <li>Werkstukken en portfolio's</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="options">
+                    <button class="sp-button" onclick="showNode('node-recognize-request', 'Persoonsgegevens begrijpen')">
+                        Volgende: Herkennen van inzageverzoek →
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Recognize access request -->
+            <div id="node-recognize-request" class="decision-node hidden">
+                <div class="question">
+                    <span class="question-icon">🔍</span>
+                    Hoe herken je een inzageverzoek?
+                </div>
+                <div class="description">Een inzageverzoek kan op verschillende manieren worden geformuleerd. Leer hoe je zo'n verzoek correct identificeert, ook als het niet expliciet als "AVG-verzoek" wordt genoemd.</div>
+                
+                <div class="action-box">
+                    <div class="action-title">🎯 Inzageverzoek herkennen:</div>
+                    <div class="action-content">
+                        <p>Een betrokkene hoeft <strong>niet letterlijk</strong> de term "inzageverzoek" of "AVG" te gebruiken. Het gaat om de inhoud!</p>
+                        
+                        <p><strong>✅ Voorbeelden van inzageverzoeken:</strong></p>
+                        <ul>
+                            <li>"Ik wil graag weten welke informatie jullie over mij hebben"</li>
+                            <li>"Kunnen jullie mij alle gegevens sturen die over mij zijn opgeslagen?"</li>
+                            <li>"Ik wil inzage in mijn persoonlijke dossier"</li>
+                            <li>"Welke gegevens hebben jullie van mij in jullie systemen staan?"</li>
+                            <li>"Ik beroep me op mijn recht op inzage volgens de AVG"</li>
+                            <li>"Wat hebben jullie allemaal over mij geregistreerd?"</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="action-box warning">
+                    <div class="action-title">⚠️ Bij twijfel:</div>
+                    <div class="action-content">
+                        <p>Als je twijfelt of een verzoek onder de AVG valt, neem <strong>altijd</strong> contact op met het Centrale Privacy Team via <a href="mailto:avg@hva.nl">avg@hva.nl</a>.</p>
+                    </div>
+                </div>
+                
+                <div class="options">
+                    <button class="sp-button" onclick="showNode('node-input-channel', 'Inzageverzoek herkennen')">
+                        Volgende: Bepalen ingangskanaal →
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Input channel determination -->
+            <div id="node-input-channel" class="decision-node hidden">
+                <div class="question">
+                    <span class="question-icon">📨</span>
+                    Via welk kanaal is het verzoek binnengekomen?
+                </div>
+                <div class="description">Het ingangskanaal bepaalt welke vervolgacties je moet ondernemen. Selecteer hieronder hoe het verzoek bij jou is aangekomen.</div>
+                
+                <div class="action-box">
+                    <div class="action-title">💡 Waarom is dit belangrijk?</div>
+                    <div class="action-content">
+                        <p>Het kanaal bepaalt of je direct kunt starten met de verwerking of dat er eerst andere stappen nodig zijn, zoals doorverwijzing of registratie.</p>
+                    </div>
+                </div>
+                
+                <div class="options vertical">
+                    <button class="sp-button" onclick="showNode('node-via-privacy-ft', 'Via privacy-ft@hva.nl')">
+                        📧 Via privacy-ft@hva.nl
+                    </button>
+                    <button class="sp-button" onclick="showNode('node-via-other-department', 'Via andere afdeling')">
+                        🏢 Via een andere afdeling (doorgestuurd)
+                    </button>
+                    <button class="sp-button" onclick="showNode('node-directly-from-student', 'Rechtstreeks van student')">
+                        👤 Rechtstreeks van de student/betrokkene
+                    </button>
+                    <button class="sp-button" onclick="showNode('node-via-central-team', 'Via centraal team')">
+                        🏛️ Via het Centrale Privacy Team
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Via privacy-ft@hva.nl -->
+            <div id="node-via-privacy-ft" class="decision-node hidden">
+                <div class="question">
+                    <span class="question-icon">✅</span>
+                    Verzoek ontvangen via privacy-ft@hva.nl
+                </div>
+                <div class="description">Perfect! Het verzoek is correct bij jou als Privacy Officer van de Faculteit Techniek binnengekomen. Je kunt direct starten met de afhandeling.</div>
+                
+                <div class="action-box success">
+                    <div class="action-title">✅ Actie vereist:</div>
+                    <div class="action-content">
+                        <ol>
+                            <li><strong>Bevestig ontvangst</strong> van het verzoek aan de betrokkene binnen 24 uur</li>
+                            <li><strong>Registreer het verzoek</strong> in je eigen administratie met uniek referentienummer</li>
+                            <li><strong>Noteer de deadline:</strong> 30 dagen vanaf ontvangst (kan 60 dagen worden bij complexe verzoeken)</li>
+                            <li><strong>Start met gegevensverzameling</strong> uit de relevante systemen</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="options">
+                    <button class="sp-button" onclick="showNode('node-1', 'Ontvangst bevestigd')">
+                        Verder naar verwerking van het verzoek →
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Via other department -->
+            <div id="node-via-other-department" class="decision-node hidden">
+                <div class="question">
+                    <span class="question-icon">🔄</span>
+                    Verzoek ontvangen via een andere afdeling
+                </div>
+                <div class="description">Het verzoek is bij een andere afdeling binnengekomen en naar jou doorgestuurd. Je zorgt nu voor correcte afhandeling en communicatie.</div>
+                
+                <div class="action-box">
+                    <div class="action-title">📋 Actie vereist:</div>
+                    <div class="action-content">
+                        <ol>
+                            <li><strong>Bevestig ontvangst</strong> aan de betrokkene</li>
+                            <li><strong>Informeer de afdeling</strong> die het verzoek heeft doorgestuurd dat je het hebt ontvangen</li>
+                            <li><strong>Vraag eventuele context</strong> van de doorstururende afdeling</li>
+                            <li><strong>Registreer het verzoek</strong> in je eigen administratie</li>
+                            <li><strong>Start met gegevensverzameling</strong> uit alle relevante systemen</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="options">
+                    <button class="sp-button" onclick="showNode('node-1', 'Doorgestuurd verzoek overgenomen')">
+                        Verder naar verwerking van het verzoek →
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Directly from student -->
+            <div id="node-directly-from-student" class="decision-node hidden">
+                <div class="question">
+                    <span class="question-icon">👤</span>
+                    Verzoek rechtstreeks ontvangen van student/betrokkene
+                </div>
+                <div class="description">Het verzoek is rechtstreeks bij jou of een medewerker van de Faculteit Techniek binnengekomen. Je zorgt voor professionele afhandeling en duidelijke communicatie.</div>
+                
+                <div class="action-box">
+                    <div class="action-title">📞 Actie vereist:</div>
+                    <div class="action-content">
+                        <ol>
+                            <li><strong>Bevestig ontvangst</strong> aan de betrokkene</li>
+                            <li><strong>Leg uit</strong> dat je als Privacy Officer van de Faculteit Techniek het verzoek zult afhandelen</li>
+                            <li><strong>Geef informatie</strong> over het proces en de tijdlijn (30 dagen)</li>
+                            <li><strong>Registreer het verzoek</strong> in je eigen administratie</li>
+                            <li><strong>Start met gegevensverzameling</strong> uit de relevante systemen</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="options">
+                    <button class="sp-button" onclick="showNode('node-1', 'Direct verzoek overgenomen')">
+                        Verder naar verwerking van het verzoek →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Via central team -->
+            <div id="node-via-central-team" class="decision-node hidden">
+                <div class="question">
+                    <span class="question-icon">🏛️</span>
+                    Verzoek ontvangen via het Centrale Privacy Team
+                </div>
+                <div class="description">Het Centrale Privacy Team heeft het verzoek naar jou doorgestuurd voor faculteitsspecifieke afhandeling.</div>
+                
+                <div class="action-box">
+                    <div class="action-title">🤝 Actie vereist:</div>
+                    <div class="action-content">
+                        <ol>
+                            <li><strong>Neem contact op</strong> met het Centrale Privacy Team voor eventuele context</li>
+                            <li><strong>Bevestig ontvangst</strong> bij het Centrale Privacy Team</li>
+                            <li><strong>Informeer de betrokkene</strong> dat je het verzoek hebt ontvangen (indien nog niet gedaan)</li>
+                            <li><strong>Registreer het verzoek</strong> in je eigen administratie</li>
+                            <li><strong>Start met gegevensverzameling</strong> uit de relevante systemen</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="options">
+                    <button class="sp-button" onclick="showNode('node-1', 'Centraal verzoek overgenomen')">
+                        Verder naar verwerking van het verzoek →
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Initial Question (Node 1) -->
+            <div id="node-1" class="decision-node hidden">
+                <div class="question">
+                    <span class="question-icon">❓</span>
+                    Welk type AVG-verzoek is ontvangen?
+                </div>
+                <div class="description">Bepaal het exacte type verzoek dat je hebt ontvangen. Dit bepaalt de vervolgstappen en de wijze van afhandeling.</div>
+                
+                <div class="action-box warning">
+                    <div class="action-title">⚠️ Let op bij twijfel:</div>
+                    <div class="action-content">
+                        <p>Als je twijfelt over het type AVG-verzoek, neem dan <strong>altijd</strong> contact op met het Centrale Privacy Team via <a href="mailto:avg@hva.nl">avg@hva.nl</a> voor advies.</p>
+                    </div>
+                </div>
+                
+                <div class="options vertical">
+                    <button class="sp-button" onclick="showNode('node-2', 'Inzageverzoek gekozen')">
+                        👁️ Inzageverzoek (Art. 15 AVG) - Recht op inzage
+                    </button>
+                    <button class="sp-button" onclick="showNode('node-other-request', 'Ander type verzoek')">
+                        📋 Ander type AVG-verzoek (rectificatie, wissing, etc.)
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Node 2: Identity verification -->
+            <div id="node-2" class="decision-node hidden">
+                <div class="question">
+                    <span class="question-icon">🔐</span>
+                    Is de identiteit van de verzoeker geverifieerd?
+                </div>
+                <div class="description">Identiteitsverificatie is cruciaal om te voorkomen dat persoonsgegevens aan onbevoegden worden verstrekt. Controleer of de identiteit van de verzoeker is vastgesteld.</div>
+                
+                <div class="action-box">
+                    <div class="action-title">🛡️ Toegestane verificatiemethoden:</div>
+                    <div class="action-content">
+                        <ul>
+                            <li><strong>HvA e-mailadres:</strong> Verzoek ontvangen via student-/medewerker e-mailadres (@student.hva.nl of @hva.nl)</li>
+                            <li><strong>Identiteitsbewijs:</strong> Kopie van geldig identiteitsbewijs (let op AVG-vereisten voor verwerking ID)</li>
+                            <li><strong>HvA-accountverificatie:</strong> Login via bestaande HvA-accounts (SIS, HvA-ID)</li>
+                            <li><strong>Telefonische verificatie:</strong> Verificatie via bekend telefoonnummer uit systemen</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="action-box warning">
+                    <div class="action-title">⚠️ Belangrijk:</div>
+                    <div class="action-content">
+                        <p>Bij twijfel over de identiteit: <strong>GEEN gegevens verstrekken</strong> tot verificatie is voltooid.</p>
+                    </div>
+                </div>
+                
+                <div class="options">
+                    <button class="sp-button" onclick="showNode('node-3', 'Identiteit geverifieerd')">
+                        ✅ Ja, identiteit is geverifieerd
+                    </button>
+                    <button class="sp-button" onclick="showNode('node-verify', 'Verificatie nodig')">
+                        ❌ Nee, verificatie is nog nodig
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Node Verify: Identity verification -->
+            <div id="node-verify" class="decision-node hidden">
+                <div class="question">
+                    <span class="question-icon">🔍</span>
+                    Identiteit verifiëren
+                </div>
+                <div class="description">Volg de onderstaande stappen om de identiteit van de verzoeker veilig te verifiëren voordat je verdergaat met het verzoek.</div>
+                
+                <div class="action-box error">
+                    <div class="action-title">🛑 STOP - Verificatie vereist:</div>
+                    <div class="action-content">
+                        <ol>
+                            <li><strong>Neem contact op</strong> met de verzoeker via een bekend kanaal</li>
+                            <li><strong>Vraag om verificatie</strong> via een van de toegestane methoden</li>
+                            <li><strong>Leg uit waarom</strong> verificatie nodig is (privacybescherming)</li>
+                            <li><strong>Wacht op succesvolle verificatie</strong> voordat je verdergaat</li>
+                            <li><strong>Documenteer</strong> de verificatiemethode in je administratie</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="action-box">
+                    <div class="action-title">📧 Voorbeeld verificatie-email:</div>
+                    <div class="action-content">
+                        <p><em>"Voor uw eigen privacy en veiligheid moeten wij uw identiteit verifiëren. Kunt u uw verzoek opnieuw sturen vanaf uw HvA e-mailadres, of een kopie van uw identiteitsbewijs meesturen?"</em></p>
+                    </div>
+                </div>
+                
+                <div class="options">
+                    <button class="sp-button" onclick="showNode('node-3', 'Verificatie voltooid')">
+                        ✅ Verder na succesvolle verificatie
+                    </button>
+                    <button class="sp-button secondary" onclick="showNode('node-2', 'Terug naar verificatie')">
+                        ← Terug naar verificatie-opties
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Node 3: Data collection -->
+            <div id="node-3" class="decision-node hidden">
+                <div class="question">
+                    <span class="question-icon">🗃️</span>
+                    In welke systemen moeten gegevens worden verzameld?
+                </div>
+                <div class="description">Selecteer alle systemen waarin persoonsgegevens van de betrokkene kunnen staan. Je kunt meerdere systemen selecteren en na elk systeem terugkeren voor de volgende.</div>
+                
+                <div class="action-box">
+                    <div class="action-title">💡 Tip voor efficiënte gegevensverzameling:</div>
+                    <div class="action-content">
+                        <p>Begin met de systemen waar waarschijnlijk de meeste gegevens staan (meestal SIS en Brightspace). Werk systematisch alle relevante systemen af.</p>
+                    </div>
+                </div>
+
+                <div class="system-grid">
+                    <div class="system-card" onclick="showNode('node-sis', 'SIS gekozen')">
+                        <div class="system-title">📊 SIS (Studentinformatiesysteem)</div>
+                        <div class="system-description">Basis studentgegevens, inschrijvingen, studieresultaten</div>
+                        <button class="sp-button small">Instructies bekijken →</button>
+                    </div>
+
+                    <div class="system-card" onclick="showNode('node-brightspace', 'Brightspace gekozen')">
+                        <div class="system-title">💻 Brightspace</div>
+                        <div class="system-description">Cursusmateriaal, opdrachten, beoordelingen, discussies</div>
+                        <button class="sp-button small">Instructies bekijken →</button>
+                    </div>
+
+                    <div class="system-card" onclick="showNode('node-ans', 'ANS gekozen')">
+                        <div class="system-title">📝 ANS (Digitaal toetsplatform)</div>
+                        <div class="system-description">Toetsresultaten, antwoorden, feedback</div>
+                        <button class="sp-button small">Instructies bekijken →</button>
+                    </div>
+
+                    <div class="system-card" onclick="showNode('node-onstage', 'OnStage gekozen')">
+                        <div class="system-title">🏢 OnStage (Stagedatabase)</div>
+                        <div class="system-description">Stagegegevens, beoordelingen, bedrijfscontacten</div>
+                        <button class="sp-button small">Instructies bekijken →</button>
+                    </div>
+
+                    <div class="system-card" onclick="showNode('node-sharepoint', 'SharePoint gekozen')">
+                        <div class="system-title">📁 SharePoint & OneDrive</div>
+                        <div class="system-description">Documenten, samenwerkingsruimtes, gedeelde bestanden</div>
+                        <button class="sp-button small">Instructies bekijken →</button>
+                    </div>
+
+                    <div class="system-card" onclick="showNode('node-teams', 'Teams gekozen')">
+                        <div class="system-title">💬 Microsoft Teams</div>
+                        <div class="system-description">Berichten, gesprekken, gedeelde bestanden</div>
+                        <button class="sp-button small">Instructies bekijken →</button>
+                    </div>
+                </div>
+                
+                <div class="options" style="margin-top: 25px;">
+                    <button class="sp-button secondary" onclick="showNode('node-collect-done', 'Gegevensverzameling voltooid')">
+                        ✅ Gegevens verzameld uit alle relevante systemen
+                    </button>
+                </div>
+            </div>
+            
+            <!-- System instruction nodes -->
+            <div id="node-sis" class="decision-node hidden">
+                <div class="question">
+                    <span class="question-icon">📊</span>
+                    Gegevens verzamelen uit SIS
+                </div>
+                <div class="description">Volg onderstaande stap-voor-stap instructies om alle relevante gegevens uit het Studentinformatiesysteem te verzamelen.</div>
+                
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <strong>Stap 1: Inloggen</strong><br>
+                        Log in op SIS via de HvA-portal met je beheerdersaccount
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 2: Student zoeken</strong><br>
+                        Zoek de student op basis van studentnummer, naam of e-mailadres
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 3: Gegevens exporteren</strong><br>
+                        Ga naar "Persoonsgegevens" → klik "Exporteren" (rechts bovenin)
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 4: Aanvullende gegevens</strong><br>
+                        Controleer ook: studieresultaten, inschrijfhistorie, financiële gegevens
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 5: Veilig opslaan</strong><br>
+                        Sla bestanden op in beveiligde omgeving met encryptie
+                    </div>
+                </div>
+
+                <div class="action-box warning">
+                    <div class="action-title">⚠️ Let op:</div>
+                    <div class="action-content">
+                        <ul>
+                            <li>Controleer of er gegevens van andere studenten in het export staan</li>
+                            <li>Verwijder eventuele medestudent-informatie voordat je opslaat</li>
+                            <li>Noteer welke gegevens je hebt gevonden voor je eindrapport</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="options">
+                    <button class="sp-button" onclick="showNode('node-3', 'SIS voltooid')">
+                        ← Terug naar systeemkeuze
+                    </button>
+                    <button class="sp-button secondary" onclick="showNode('node-brightspace', 'Naar Brightspace')">
+                        Volgende: Brightspace →
+                    </button>
+                </div>
+            </div>
+            
+            <div id="node-brightspace" class="decision-node hidden">
+                <div class="question">
+                    <span class="question-icon">💻</span>
+                    Gegevens verzamelen uit Brightspace
+                </div>
+                <div class="description">Verzamel alle leeractiviteiten, beoordelingen en communicatie van de student uit Brightspace.</div>
+                
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <strong>Stap 1: Brightspace openen</strong><br>
+                        Log in op Brightspace via de HvA-portal
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 2: Student zoeken</strong><br>
+                        Ga naar "Klassenbeheer" → zoek de student in alle relevante cursussen
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 3: Gebruikersvoortgang</strong><br>
+                        Klik tandwielpictogram → "Gebruikersvoortgang" → exporteer als PDF/Excel
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 4: Inzendingen & feedback</strong><br>
+                        Verzamel: opdrachten, discussiebijdragen, beoordelingen, feedback
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 5: Communicatie</strong><br>
+                        Check: berichten, announcements, groepscommunicatie
+                    </div>
+                </div>
+
+                <div class="action-box warning">
+                    <div class="action-title">⚠️ Privacy-aandachtspunten:</div>
+                    <div class="action-content">
+                        <ul>
+                            <li>Anonimiseer namen van medestudenten in groepswerk</li>
+                            <li>Verwijder feedback die betrekking heeft op andere studenten</li>
+                            <li>Let op gedeelde documenten met gegevens van derden</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="options">
+                    <button class="sp-button" onclick="showNode('node-3', 'Brightspace voltooid')">
+                        ← Terug naar systeemkeuze
+                    </button>
+                    <button class="sp-button secondary" onclick="showNode('node-ans', 'Naar ANS')">
+                        Volgende: ANS →
+                    </button>
+                </div>
+            </div>
+            
+            <div id="node-ans" class="decision-node hidden">
+                <div class="question">
+                    <span class="question-icon">📝</span>
+                    Gegevens verzamelen uit ANS
+                </div>
+                <div class="description">Verzamel alle toetsgegevens en beoordelingen uit het digitale toetsplatform ANS.</div>
+                
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <strong>Stap 1: ANS bereiken</strong><br>
+                        Log in op ANS via de HvA-portal → Assessment & Feedback
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 2: Studentenbeheer</strong><br>
+                        Ga naar "Studentenbeheer" → zoek de betreffende student
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 3: Toetsresultaten</strong><br>
+                        Exporteer alle toetsresultaten naar Excel-bestand
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 4: Individuele toetsen</strong><br>
+                        Maak screenshots van gedetailleerde toetsresultaten per vak
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 5: Feedback verzamelen</strong><br>
+                        Verzamel alle geschreven feedback van docenten bij toetsen
+                    </div>
+                </div>
+
+                <div class="action-box">
+                    <div class="action-title">📋 Extra te controleren:</div>
+                    <div class="action-content">
+                        <ul>
+                            <li>Hertentamens en aanvullende beoordelingen</li>
+                            <li>Digitale handtekeningen bij toetsen</li>
+                            <li>Tijdsregistratie van toetsafname</li>
+                            <li>Eventuele bijzondere omstandigheden</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="options">
+                    <button class="sp-button" onclick="showNode('node-3', 'ANS voltooid')">
+                        ← Terug naar systeemkeuze
+                    </button>
+                    <button class="sp-button secondary" onclick="showNode('node-onstage', 'Naar OnStage')">
+                        Volgende: OnStage →
+                    </button>
+                </div>
+            </div>
+            
+            <div id="node-onstage" class="decision-node hidden">
+                <div class="question">
+                    <span class="question-icon">🏢</span>
+                    Gegevens verzamelen uit OnStage
+                </div>
+                <div class="description">Verzamel alle stagegegevens, beoordelingen en gerelateerde documenten uit de stagedatabase.</div>
+                
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <strong>Stap 1: OnStage openen</strong><br>
+                        Log in op OnStage via de HvA-portal
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 2: Student zoeken</strong><br>
+                        Zoek de student en open het complete stageprofiel
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 3: Stageovereenkomsten</strong><br>
+                        Download alle stageovereenkomsten en bijbehorende documenten
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 4: Beoordelingen</strong><br>
+                        Verzamel: beoordelingsformulieren, evaluaties, feedback
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 5: Correspondentie</strong><br>
+                        Download alle e-mails en communicatie met stagebegeleiders
+                    </div>
+                </div>
+
+                <div class="action-box error">
+                    <div class="action-title">🚨 Privacyrisico - Gegevens van derden:</div>
+                    <div class="action-content">
+                        <ul>
+                            <li><strong>Bedrijfsgegevens:</strong> Anonimiseer contactgegevens van stagebedrijven</li>
+                            <li><strong>Begeleiders:</strong> Verwijder persoonlijke gegevens van stagebegeleiders</li>
+                            <li><strong>Collega-stagiairs:</strong> Anonimiseer gegevens van andere stagiairs</li>
+                            <li><strong>Vertrouwelijke info:</strong> Let op bedrijfsvertrouwelijke informatie</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="options">
+                    <button class="sp-button" onclick="showNode('node-3', 'OnStage voltooid')">
+                        ← Terug naar systeemkeuze
+                    </button>
+                    <button class="sp-button secondary" onclick="showNode('node-sharepoint', 'Naar SharePoint')">
+                        Volgende: SharePoint →
+                    </button>
+                </div>
+            </div>
+            
+            <div id="node-sharepoint" class="decision-node hidden">
+                <div class="question">
+                    <span class="question-icon">📁</span>
+                    Gegevens verzamelen uit SharePoint & OneDrive
+                </div>
+                <div class="description">Doorzoek alle SharePoint-sites en OneDrive-locaties waar de student toegang toe heeft gehad of waar documenten met zijn/haar gegevens staan.</div>
+                
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <strong>Stap 1: SharePoint sites</strong><br>
+                        Log in op SharePoint → identificeer alle sites met studentgegevens
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 2: Zoekfunctie gebruiken</strong><br>
+                        Gebruik zoekfunctie op studentnaam, nummer en e-mailadres
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 3: Documentbibliotheken</strong><br>
+                        Controleer alle documentbibliotheken per faculteit/opleiding
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 4: Lijsten & metadata</strong><br>
+                        Exporteer relevante lijsten met studentgegevens
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 5: Versiegeschiedenis</strong><br>
+                        Check versiegeschiedenis van documenten met studentgegevens
+                    </div>
+                </div>
+
+                <div class="action-box">
+                    <div class="action-title">🔍 Zoeklocaties:</div>
+                    <div class="action-content">
+                        <ul>
+                            <li>Faculteit Techniek hoofdsite</li>
+                            <li>Opleidingsspecifieke sites (HBO-ICT, Technische Informatica, etc.)</li>
+                            <li>Projectsites en samenwerkingsruimtes</li>
+                            <li>Persoonlijke OneDrive van medewerkers (waar toegankelijk)</li>
+                            <li>Teams-gerelateerde SharePoint sites</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="options">
+                    <button class="sp-button" onclick="showNode('node-3', 'SharePoint voltooid')">
+                        ← Terug naar systeemkeuze
+                    </button>
+                    <button class="sp-button secondary" onclick="showNode('node-teams', 'Naar Teams')">
+                        Volgende: Teams →
+                    </button>
+                </div>
+            </div>
+
+            <div id="node-teams" class="decision-node hidden">
+                <div class="question">
+                    <span class="question-icon">💬</span>
+                    Gegevens verzamelen uit Microsoft Teams
+                </div>
+                <div class="description">Verzamel alle berichten, bestanden en communicatie waarbij de student betrokken was in Microsoft Teams.</div>
+                
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <strong>Stap 1: Teams bereiken</strong><br>
+                        Log in op Microsoft Teams → ga naar alle relevante teams
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 2: Zoeken in berichten</strong><br>
+                        Gebruik zoekfunctie om alle berichten van/over de student te vinden
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 3: Gedeelde bestanden</strong><br>
+                        Controleer alle gedeelde bestanden in Teams-kanalen
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 4: Privéberichten</strong><br>
+                        Check 1-op-1 chats tussen docenten en student
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Stap 5: Vergaderrecords</strong><br>
+                        Controleer vergadernotities en opnames waar student bij was
+                    </div>
+                </div>
+
+                <div class="action-box warning">
+                    <div class="action-title">⚠️ Teams-specifieke privacy-aandachtspunten:</div>
+                    <div class="action-content">
+                        <ul>
+                            <li>Anonimiseer andere deelnemers in groepschats</li>
+                            <li>Verwijder gegevens van andere studenten uit screenshots</li>
+                            <li>Let op gedeelde schermen met persoonlijke informatie</li>
+                            <li>Controleer bijlagen en documenten op privacy-gevoelige data</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="options">
+                    <button class="sp-button" onclick="showNode('node-3', 'Teams voltooid')">
+                        ← Terug naar systeemkeuze
+                    </button>
+                    <button class="sp-button secondary" onclick="showNode('node-collect-done', 'Gegevensverzameling afronden')">
+                        Klaar met verzamelen →
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Node Collect Done: Data collection completed -->
+            <div id="node-collect-done" class="decision-node hidden">
+                <div class="question">
+                    <span class="question-icon">📤</span>
+                    Doorsturen naar Centrale Privacy Team
+                </div>
+                <div class="description">Alle relevante gegevens zijn verzameld. Nu stuur je het complete dossier door naar het Centrale Privacy Team voor professionele anonimisering en definitieve afhandeling.</div>
+                
+                <div class="action-box success">
+                    <div class="action-title">📋 Checklist voor doorsturen:</div>
+                    <div class="action-content">
+                        <ol>
+                            <li><strong>Completeer je dossier:</strong>
+                                <ul>
+                                    <li>Alle verzamelde bestanden in één beveiligde map</li>
+                                    <li>Overzichtslijst van gevonden gegevens per systeem</li>
+                                    <li>Notities over eventuele bijzonderheden</li>
+                                    <li>Kopie van het oorspronkelijke verzoek</li>
+                                </ul>
+                            </li>
+                            <li><strong>Stuur naar:</strong> <a href="mailto:avg@hva.nl">avg@hva.nl</a></li>
+                            <li><strong>Onderwerp:</strong> "Inzageverzoek - [Studentnaam] - [Referentienummer]"</li>
+                            <li><strong>Vermeld in je e-mail:</strong>
+                                <ul>
+                                    <li>Type verzoek (inzageverzoek Art. 15 AVG)</li>
+                                    <li>Systemen waarin gegevens zijn verzameld</li>
+                                    <li>Eventuele aandachtspunten of bijzonderheden</li>
+                                    <li>Deadline voor afhandeling</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="action-box">
+                    <div class="action-title">🤝 Het Centrale Privacy Team zal:</div>
+                    <div class="action-content">
+                        <ul>
+                            <li><strong>Anonimiseren:</strong> Alle gegevens van derden professioneel bewerken</li>
+                            <li><strong>Structureren:</strong> Informatie overzichtelijk en begrijpelijk opstellen</li>
+                            <li><strong>Controleren:</strong> Volledigheid en juistheid van de gegevens</li>
+                            <li><strong>Verstrekken:</strong> Contact opnemen met betrokkene voor veilige overdracht</li>
+                            <li><strong>Documenteren:</strong> Verzoek officieel afsluiten en archiveren</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="export-section">
+                    <div class="export-title">📊 Voortgang exporteren</div>
+                    <p>Bewaar een samenvatting van je activiteiten voor je eigen administratie:</p>
+                    <div class="options">
+                        <button class="sp-button small" onclick="exportSummary()">📄 Exporteer samenvatting</button>
+                        <button class="sp-button small secondary" onclick="printProgress()">🖨️ Print checklist</button>
+                    </div>
+                </div>
+                
+                <div class="options">
+                    <button class="sp-button" onclick="showNode('node-completion', 'Doorgestuurd naar centraal team')">
+                        ✅ Dossier doorgestuurd naar Centrale Privacy Team
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Node Completion: Process completed -->
+            <div id="node-completion" class="decision-node hidden">
+                <div class="completion-celebration">
+                    <div class="celebration-icon">🎉</div>
+                    <h2>Proces succesvol voltooid!</h2>
+                    <p>Je hebt het inzageverzoek professioneel verwerkt en doorgestuurd.</p>
+                </div>
+                
+                <div class="action-box success">
+                    <div class="action-title">✅ Wat je hebt bereikt:</div>
+                    <div class="action-content">
+                        <ul>
+                            <li>✅ Identiteit van verzoeker geverifieerd</li>
+                            <li>✅ Systematisch alle relevante systemen doorzocht</li>
+                            <li>✅ Gegevens veilig verzameld en georganiseerd</li>
+                            <li>✅ Dossier professioneel overgedragen aan Centrale Privacy Team</li>
+                            <li>✅ Deadline in acht genomen (30 dagen termijn)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="action-box">
+                    <div class="action-title">📝 Vervolgstappen Centrale Privacy Team:</div>
+                    <div class="action-content">
+                        <ol>
+                            <li><strong>Anonimisering</strong> van alle gegevens van derden</li>
+                            <li><strong>Samenstelling</strong> overzichtelijk informatiedossier</li>
+                            <li><strong>Kwaliteitscontrole</strong> en completheidscheck</li>
+                            <li><strong>Contact</strong> met betrokkene voor veilige verstrekking</li>
+                            <li><strong>Officiële afsluiting</strong> van het verzoek</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="action-box warning">
+                    <div class="action-title">📚 Voor je eigen administratie:</div>
+                    <div class="action-content">
+                        <p><strong>Bewaar:</strong> Een kopie van je correspondentie, de samenvatting van gevonden gegevens, en notities over het proces voor je eigen faculteitsadministratie.</p>
+                    </div>
+                </div>
+                
+                <div class="options">
+                    <button class="sp-button" onclick="showNode('node-info-personal-data', 'Nieuwe sessie starten')">
+                        🔄 Nieuwe inzageverzoek starten
+                    </button>
+                    <button class="sp-button secondary" onclick="exportFinalReport()">
+                        📊 Eindrapport genereren
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Other request types -->
+            <div id="node-other-request" class="decision-node hidden">
+                <div class="question">
+                    <span class="question-icon">📋</span>
+                    Andere AVG-verzoeken
+                </div>
+                <div class="description">Voor andere typen AVG-verzoeken dan inzage, volg je een aangepast proces. Hieronder vind je de juiste vervolgstappen.</div>
+                
+                <div class="action-box">
+                    <div class="action-title">📋 Andere AVG-rechten:</div>
+                    <div class="action-content">
+                        <ul>
+                            <li><strong>Art. 16 - Rectificatie:</strong> Recht op verbetering van onjuiste gegevens</li>
+                            <li><strong>Art. 17 - Wissing:</strong> Recht op verwijdering ("recht op vergeten worden")</li>
+                            <li><strong>Art. 18 - Beperking:</strong> Recht op beperking van verwerking</li>
+                            <li><strong>Art. 20 - Dataportabiliteit:</strong> Recht op overdraagbaarheid</li>
+                            <li><strong>Art. 21 - Bezwaar:</strong> Recht van bezwaar tegen verwerking</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="action-box error">
+                    <div class="action-title">🛑 Speciale behandeling vereist:</div>
+                    <div class="action-content">
+                        <p>Deze verzoeken vereisen juridische beoordeling en specialistische kennis. Het Centrale Privacy Team heeft de expertise om deze verzoeken correct te beoordelen en af te handelen.</p>
+                    </div>
+                </div>
+
+                <div class="action-box">
+                    <div class="action-title">📞 Actie vereist:</div>
+                    <div class="action-content">
+                        <ol>
+                            <li><strong>Bevestig ontvangst</strong> bij de betrokkene</li>
+                            <li><strong>Stuur het verzoek door</strong> naar <a href="mailto:avg@hva.nl">avg@hva.nl</a></li>
+                            <li><strong>Vermeld het type verzoek</strong> duidelijk in je e-mail</li>
+                            <li><strong>Voeg context toe</strong> over de situatie (indien bekend)</li>
+                            <li><strong>Het Centrale Privacy Team</strong> zal je begeleiden bij verdere afhandeling</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="options">
+                    <button class="sp-button" onclick="showNode('node-info-personal-data', 'Terug naar start')">
+                        ← Terug naar begin
+                    </button>
+                    <button class="sp-button secondary" onclick="showContactInfo()">
+                        📞 Contactgegevens bekijken
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- Contact Information Modal -->
+        <div id="contact-modal" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+            <div style="background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%;">
+                <h3 style="margin-top: 0; color: var(--hva-purple);">📞 Contactinformatie</h3>
+                <div class="action-content">
+                    <p><strong>Centrale Privacy Team HvA:</strong></p>
+                    <ul>
+                        <li>📧 E-mail: <a href="mailto:avg@hva.nl">avg@hva.nl</a></li>
+                        <li>📞 Telefoon: 020-595 1111 (doorverbinden naar Privacy Officer)</li>
+                        <li>🌐 Website: <a href="https://www.hva.nl/privacy" target="_blank">www.hva.nl/privacy</a></li>
+                    </ul>
+                    <p><strong>Privacy Officer Faculteit Techniek:</strong></p>
+                    <ul>
+                        <li>📧 E-mail: <a href="mailto:privacy-ft@hva.nl">privacy-ft@hva.nl</a></li>
+                        <li>👤 Dewi Maertens</li>
+                    </ul>
+                </div>
+                <button class="sp-button" onclick="hideContactInfo()">Sluiten</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced JavaScript for the decision tree
+        let history = [{id: 'node-info-personal-data', title: 'Start', choice: null}];
+        let currentStep = 1;
+        let totalSteps = 12;
+
+        // Step mapping for progress calculation
+        const stepMapping = {
+            'node-info-personal-data': 1,
+            'node-recognize-request': 2,
+            'node-input-channel': 3,
+            'node-via-privacy-ft': 4,
+            'node-via-other-department': 4,
+            'node-directly-from-student': 4,
+            'node-via-central-team': 4,
+            'node-1': 5,
+            'node-2': 6,
+            'node-verify': 7,
+            'node-3': 8,
+            'node-sis': 9,
+            'node-brightspace': 9,
+            'node-ans': 9,
+            'node-onstage': 9,
+            'node-sharepoint': 9,
+            'node-teams': 9,
+            'node-collect-done': 10,
+            'node-completion': 11,
+            'node-other-request': 6
+        };
+
+        function showNode(nodeId, choice = null) {
+            // Hide all nodes
+            const allNodes = document.querySelectorAll('.decision-node');
+            allNodes.forEach(node => node.classList.add('hidden'));
+            
+            // Show target node
+            const targetNode = document.getElementById(nodeId);
+            if (targetNode) {
+                targetNode.classList.remove('hidden');
+                
+                // Update history
+                if (nodeId !== history[history.length - 1].id) {
+                    history.push({
+                        id: nodeId,
+                        title: getNodeTitle(nodeId),
+                        choice: choice
+                    });
+                }
+                
+                // Update progress
+                updateProgress();
+                updateBreadcrumb();
+                updateStats();
+                
+                // Show/hide back button
+                const backButton = document.getElementById('back-button');
+                if (history.length > 1) {
+                    backButton.classList.remove('hidden');
+                } else {
+                    backButton.classList.add('hidden');
+                }
+
+                // Scroll to top of decision tree
+                targetNode.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function goBack() {
+            if (history.length > 1) {
+                history.pop();
+                const previousStep = history[history.length - 1];
+                
+                // Hide all nodes
+                const allNodes = document.querySelectorAll('.decision-node');
+                allNodes.forEach(node => node.classList.add('hidden'));
+                
+                // Show previous node
+                const targetNode = document.getElementById(previousStep.id);
+                if (targetNode) {
+                    targetNode.classList.remove('hidden');
+                }
+                
+                // Update progress
+                updateProgress();
+                updateBreadcrumb();
+                updateStats();
+                
+                // Hide back button if at start
+                if (history.length <= 1) {
+                    const backButton = document.getElementById('back-button');
+                    backButton.classList.add('hidden');
+                }
+            }
+        }
+
+        function getNodeTitle(nodeId) {
+            const node = document.getElementById(nodeId);
+            if (node) {
+                const questionElement = node.querySelector('.question');
+                if (questionElement) {
+                    let title = questionElement.textContent.trim();
+                    // Remove emoji and clean up title
+                    title = title.replace(/^[📊💻📝🏢📁💬🔍❓👤📨✅🔄📤🎉📋ℹ️🔐]+\s*/, '');
+                    // Truncate long titles
+                    return title.length > 30 ? title.substring(0, 30) + '...' : title;
+                }
+            }
+            return 'Stap';
+        }
+
+        function updateBreadcrumb() {
+            const breadcrumb = document.getElementById('breadcrumb');
+            breadcrumb.innerHTML = '';
+            
+            history.forEach((step, index) => {
+                // Create breadcrumb item
+                const item = document.createElement('span');
+                item.className = 'breadcrumb-item';
+                item.textContent = step.title;
+                
+                // Add choice information if available
+                if (step.choice) {
+                    item.className += ' choice';
+                    item.setAttribute('data-tooltip', `Keuze: ${step.choice}`);
+                    item.classList.add('tooltip');
+                }
+                
+                // Mark current step
+                if (index === history.length - 1) {
+                    item.className += ' current';
+                }
+                
+                // Make clickable for navigation
+                if (index < history.length - 1) {
+                    item.style.cursor = 'pointer';
+                    item.onclick = () => navigateToStep(index);
+                }
+                
+                breadcrumb.appendChild(item);
+                
+                // Add arrow if not last item
+                if (index < history.length - 1) {
+                    const arrow = document.createElement('span');
+                    arrow.className = 'breadcrumb-arrow';
+                    arrow.textContent = '→';
+                    breadcrumb.appendChild(arrow);
+                }
+            });
+        }
+
+        function navigateToStep(stepIndex) {
+            if (stepIndex < history.length - 1) {
+                // Trim history to selected step
+                history = history.slice(0, stepIndex + 1);
+                
+                // Show the selected step
+                const targetStep = history[stepIndex];
+                const allNodes = document.querySelectorAll('.decision-node');
+                allNodes.forEach(node => node.classList.add('hidden'));
+                
+                const targetNode = document.getElementById(targetStep.id);
+                if (targetNode) {
+                    targetNode.classList.remove('hidden');
+                }
+                
+                updateProgress();
+                updateBreadcrumb();
+                updateStats();
+            }
+        }
+
+        function updateProgress() {
+            const currentNodeId = history[history.length - 1].id;
+            currentStep = stepMapping[currentNodeId] || 1;
+            
+            const progressPercentage = Math.round((currentStep / totalSteps) * 100);
+            
+            // Update progress bar
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = progressPercentage + '%';
+            
+            // Update progress text
+            document.getElementById('progress-percentage').textContent = progressPercentage + '%';
+        }
+
+        function updateStats() {
+            const currentNodeId = history[history.length - 1].id;
+            currentStep = stepMapping[currentNodeId] || 1;
+            
+            document.getElementById('current-step').textContent = currentStep;
+            
+            // Calculate estimated remaining time
+            const remainingSteps = totalSteps - currentStep;
+            const estimatedMinutes = Math.max(1, remainingSteps * 1.5);
+            document.getElementById('time-estimate').textContent = Math.round(estimatedMinutes) + ' min';
+        }
+
+        function resetProcess() {
+            if (confirm('Weet je zeker dat je opnieuw wilt beginnen? Je voortgang gaat verloren.')) {
+                history = [{id: 'node-info-personal-data', title: 'Start', choice: null}];
+                showNode('node-info-personal-data');
+            }
+        }
+
+        function exportProgress() {
+            const progressData = {
+                timestamp: new Date().toISOString(),
+                currentStep: currentStep,
+                totalSteps: totalSteps,
+                progress: Math.round((currentStep / totalSteps) * 100),
+                history: history.map(step => ({
+                    title: step.title,
+                    choice: step.choice,
+                    timestamp: new Date().toISOString()
+                }))
+            };
+            
+            const dataStr = JSON.stringify(progressData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `avg-beslisboom-voortgang-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        }
+
+        function exportSummary() {
+            const summary = generateProcessSummary();
+            const dataBlob = new Blob([summary], {type: 'text/plain'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `avg-inzageverzoek-samenvatting-${new Date().toISOString().split('T')[0]}.txt`;
+            link.click();
+        }
+
+        function generateProcessSummary() {
+            const now = new Date();
+            let summary = `AVG INZAGEVERZOEK - PROCES SAMENVATTING
+            
+Datum: ${now.toLocaleDateString('nl-NL')}
+Tijd: ${now.toLocaleTimeString('nl-NL')}
+Faculteit: Techniek - Hogeschool van Amsterdam
+
+VOORTGANG:
+- Huidige stap: ${currentStep} van ${totalSteps}
+- Voltooiingspercentage: ${Math.round((currentStep / totalSteps) * 100)}%
+
+DOORLOPEN STAPPEN:
+`;
+            
+            history.forEach((step, index) => {
+                summary += `${index + 1}. ${step.title}`;
+                if (step.choice) {
+                    summary += ` (Keuze: ${step.choice})`;
+                }
+                summary += '\n';
+            });
+            
+            summary += `
+CONTACTINFORMATIE:
+- Centrale Privacy Team: avg@hva.nl
+- Privacy Officer FT: privacy-ft@hva.nl
+
+Deze samenvatting is gegenereerd door de AVG Beslisboom van de Faculteit Techniek.
+`;
+            
+            return summary;
+        }
+
+        function exportFinalReport() {
+            const report = generateFinalReport();
+            const dataBlob = new Blob([report], {type: 'text/plain'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `avg-inzageverzoek-eindrapport-${new Date().toISOString().split('T')[0]}.txt`;
+            link.click();
+        }
+
+        function generateFinalReport() {
+            const now = new Date();
+            return `AVG INZAGEVERZOEK - EINDRAPPORT
+
+ALGEMENE INFORMATIE:
+Datum voltooid: ${now.toLocaleDateString('nl-NL')}
+Tijd voltooid: ${now.toLocaleTimeString('nl-NL')}
+Verwerkt door: Faculteit Techniek - Hogeschool van Amsterdam
+Status: ✅ VOLTOOID
+
+PROCES OVERZICHT:
+Totaal doorlopen stappen: ${history.length}
+Voltooiingspercentage: 100%
+
+UITGEVOERDE ACTIES:
+${history.map((step, index) => `${index + 1}. ${step.title}${step.choice ? ` (${step.choice})` : ''}`).join('\n')}
+
+VOLGENDE STAPPEN:
+- Dossier is doorgestuurd naar Centrale Privacy Team (avg@hva.nl)
+- Centrale Privacy Team zorgt voor anonimisering van gegevens van derden
+- Centrale Privacy Team neemt contact op met betrokkene voor verstrekking
+- Verzoek wordt officieel afgesloten binnen wettelijke termijn
+
+BETROKKEN SYSTEMEN:
+De volgende systemen zijn (waar relevant) doorzocht:
+- SIS (Studentinformatiesysteem)
+- Brightspace (Learning Management System)
+- ANS (Digitaal toetsplatform)
+- OnStage (Stagedatabase)
+- SharePoint & OneDrive
+- Microsoft Teams
+
+BELANGRIJKE NOTITIES:
+- Identiteit van verzoeker is geverifieerd
+- Alle gegevens zijn veilig verzameld
+- Privacy van derden is beschermd
+- Wettelijke termijnen zijn in acht genomen
+
+Dit rapport is automatisch gegenereerd door de AVG Beslisboom van de Faculteit Techniek.
+Voor vragen: privacy-ft@hva.nl
+`;
+        }
+
+        function printProgress() {
+            const printWindow = window.open('', '_blank');
+            const progressHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AVG Inzageverzoek - Voortgang Checklist</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { border-bottom: 2px solid #5c2d91; padding-bottom: 10px; margin-bottom: 20px; }
+        .step { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
+        .completed { background-color: #e8f5e8; }
+        .current { background-color: #e5f0ff; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AVG Inzageverzoek - Voortgang Checklist</h1>
+        <p>Faculteit Techniek - Hogeschool van Amsterdam</p>
+        <p>Datum: ${new Date().toLocaleDateString('nl-NL')}</p>
+    </div>
+    
+    <h2>Doorlopen stappen:</h2>
+    ${history.map((step, index) => `
+        <div class="step ${index === history.length - 1 ? 'current' : 'completed'}">
+            <strong>Stap ${index + 1}:</strong> ${step.title}
+            ${step.choice ? `<br><em>Keuze: ${step.choice}</em>` : ''}
+        </div>
+    `).join('')}
+    
+    <div style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px;">
+        <h3>Contactinformatie:</h3>
+        <p>Centrale Privacy Team: avg@hva.nl</p>
+        <p>Privacy Officer FT: privacy-ft@hva.nl</p>
+    </div>
+</body>
+</html>
+            `;
+            
+            printWindow.document.write(progressHTML);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function showContactInfo() {
+            document.getElementById('contact-modal').classList.remove('hidden');
+        }
+
+        function hideContactInfo() {
+            document.getElementById('contact-modal').classList.add('hidden');
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            showNode('node-info-personal-data');
+            
+            // Add keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    hideContactInfo();
+                } else if (e.key === 'Backspace' && e.ctrlKey) {
+                    e.preventDefault();
+                    goBack();
+                }
+            });
+        });
+
+        // Ensure compatibility with older browsers
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                showNode('node-info-personal-data');
+            });
+        } else {
+            showNode('node-info-personal-data');
+        }
+
+        // Auto-save progress to localStorage (if available)
+        function autoSaveProgress() {
+            if (typeof(Storage) !== "undefined") {
+                const progressData = {
+                    history: history,
+                    currentStep: currentStep,
+                    timestamp: new Date().toISOString()
+                };
+                localStorage.setItem('avg-beslisboom-progress', JSON.stringify(progressData));
+            }
+        }
+
+        // Load saved progress (if available)
+        function loadSavedProgress() {
+            if (typeof(Storage) !== "undefined") {
+                const saved = localStorage.getItem('avg-beslisboom-progress');
+                if (saved) {
+                    try {
+                        const progressData = JSON.parse(saved);
+                        const saveTime = new Date(progressData.timestamp);
+                        const now = new Date();
+                        const hoursDiff = (now - saveTime) / (1000 * 60 * 60);
+                        
+                        // Only restore if save is less than 24 hours old
+                        if (hoursDiff < 24 && confirm('Er is opgeslagen voortgang gevonden. Wil je deze herstellen?')) {
+                            history = progressData.history;
+                            currentStep = progressData.currentStep;
+                            const lastStep = history[history.length - 1];
+                            showNode(lastStep.id);
+                        }
+                    } catch (e) {
+                        console.log('Kon opgeslagen voortgang niet laden:', e);
+                    }
+                }
+            }
+        }
+
+        // Auto-save on each step
+        function showNodeWithAutoSave(nodeId, choice = null) {
+            showNode(nodeId, choice);
+            autoSaveProgress();
+        }
+
+        // Override the original showNode function
+        const originalShowNode = showNode;
+        showNode = function(nodeId, choice = null) {
+            originalShowNode(nodeId, choice);
+            autoSaveProgress();
+        };
+
+        // Try to load saved progress on page load
+        window.addEventListener('load', function() {
+            setTimeout(loadSavedProgress, 500);
+        });
+    </script>
+</body>
+</html>
